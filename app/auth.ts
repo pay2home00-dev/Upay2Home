@@ -38,29 +38,77 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     Credentials({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials, request) {
-        const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
-          .safeParse(credentials);
+        try {
+          // Basic debug - will show in server logs when NEXTAUTH_DEBUG=true
+          console.log("Credentials.authorize called", { credentials });
 
-        if (!parsedCredentials.success) return null;
+          // Validate input shape
+          const parsed = z
+            .object({ email: z.string().email(), password: z.string().min(6) })
+            .safeParse(credentials);
+          if (!parsed.success) {
+            console.warn("Credentials.authorize: invalid payload", { credentials });
+            return null;
+          }
 
-        const { email, password } = parsedCredentials.data;
-        const user = await db.user.findUnique({ where: { email } });
-        if (!user || !user.userId) return null;
+          const { email, password } = parsed.data;
 
-        const passwordsMatch = await bcrypt.compare(password, user.password!);
-        if (!passwordsMatch) return null;
+          // Lookup user
+          const user = await db.user.findUnique({ where: { email } });
+          if (!user) {
+            console.warn("Credentials.authorize: user not found", { email });
+            return null;
+          }
 
-        return {
-          id: user.id,
-          email: user.email || '',
-          name: user.name || '',
-          role: user.role,
-          userId: user.userId
-        };
+          // Must have a hashed password to use credentials flow
+          if (!user.password) {
+            console.warn("Credentials.authorize: user has no password (OAuth-only?)", {
+              email,
+              userId: user.userId ?? null,
+            });
+            return null; // or optionally allow and instruct user to set a password
+          }
+
+          // Compare safely
+          const passwordsMatch = await bcrypt.compare(password, user.password);
+          if (!passwordsMatch) {
+            console.warn("Credentials.authorize: bad password", { email });
+            return null;
+          }
+
+          // Ensure userId exists. If missing, create it now (atomic update).
+          if (!user.userId) {
+            // generateUniqueUserId should be idempotent (but assume it returns a new ID)
+            const newUserId = await generateUniqueUserId();
+            await db.user.update({
+              where: { id: user.id },
+              data: { userId: newUserId },
+            });
+            user.userId = newUserId; // for return below
+          }
+
+          // Return minimal serializable object
+          return {
+            id: user.id,
+            name: user.name ?? "",
+            email: user.email ?? "",
+            role: user.role ?? "user",
+            userId: user.userId,
+            image: user.image ?? undefined,
+          };
+        } catch (err) {
+          console.error("Credentials.authorize: unexpected error", err);
+          return null; // avoid throwing — return null to indicate bad credentials
+        }
       },
     }),
+
   ],
   callbacks: {
     async jwt({ token, user }) {

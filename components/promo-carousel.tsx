@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DownloadApkModal } from "./download-apk-modal"; // <-- Make sure this component exists
+import useIsPWA from "@/hooks/useIsPWA";
 
 const promos = [
   {
@@ -26,13 +27,15 @@ const promos = [
 ];
 
 export function PromoCarousel() {
+  const isPWA = useIsPWA();
   const [current, setCurrent] = useState(0);
   const [showModal, setShowModal] = useState(false);
 
   const apkUrl = process.env.NEXT_PUBLIC_APK_URL || "/U PAY 2 HOME.apk";
 
   const next = () => setCurrent((prev) => (prev + 1) % promos.length);
-  const prev = () => setCurrent((prev) => (prev - 1 + promos.length) % promos.length);
+  const prev = () =>
+    setCurrent((prev) => (prev - 1 + promos.length) % promos.length);
 
   // ✅ Auto-slide every 5 seconds
   useEffect(() => {
@@ -87,25 +90,25 @@ export function PromoCarousel() {
         <div className="flex justify-between px-2">
           <button
             onClick={prev}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
+            className="p-2 hover:bg-muted rounded-lg transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={next}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
+            className="p-2 hover:bg-muted rounded-lg transition-colors">
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* ✅ Modal for Download APK */}
-      <DownloadApkModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        apkUrl={apkUrl}
-      />
+      {!isPWA && (
+        <DownloadApkModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          apkUrl={apkUrl}
+        />
+      )}
     </>
   );
 }

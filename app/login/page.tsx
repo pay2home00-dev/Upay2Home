@@ -102,6 +102,14 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Forget password */}
+          <div>
+            <div onClick={() => router.push("/forgot-password")} className="block text-sm font-medium w-full text-right text-foreground hover:underline mb-2">
+              {language === "en" ? "Forgot password?" : "पासवर्ड भूल गए?"}
+            </div>
+         
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               {language === "en" ? "Password" : "पासवर्ड"}
