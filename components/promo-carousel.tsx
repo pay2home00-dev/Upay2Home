@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DownloadApkModal } from "./download-apk-modal"; // <-- Make sure this component exists
 import useIsPWA from "@/hooks/useIsPWA";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const promos = [
   {
@@ -27,6 +29,19 @@ const promos = [
 ];
 
 export function PromoCarousel() {
+
+  const session = useSession();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    //@ts-ignore
+    if (session && !session?.data?.user) {
+      console.log(session)
+      router.push("/login");
+    }
+  }, [session]);
+
   const isPWA = useIsPWA();
   const [current, setCurrent] = useState(0);
   const [showModal, setShowModal] = useState(false);

@@ -47,7 +47,7 @@ export default async function sendResetEmail({
         </a>
       </p>
       <p style="color: #6b7280; font-size: 14px; line-height: 1.5;">
-        This link will expire in <b>1 hour</b>. If you didn’t request a password reset, you can safely ignore this email — your password will remain unchanged.
+        This link will expire in <b>1 hour</b>. If you didn’t request a password reset, you can safely ignore this email your password will remain unchanged.
       </p>
       <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;" />
       <p style="color: #9ca3af; font-size: 12px; text-align: center;">
